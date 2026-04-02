@@ -1,0 +1,81 @@
+/** Factorio-style exploration color palette */
+export const COLORS = {
+  // Environment
+  ground: 0x262638,
+  groundLine: 0x2e2e42,
+  road: 0x333348,
+  roadMark: 0x4a4a5e,
+
+  // UI
+  bg: 0x1a1a2e,
+  panel: 0x16213e,
+  panelBorder: 0x533483,
+  border: 0x533483,
+  borderLight: 0x7c5cbf,
+  text: 0xe0e0e0,
+  textDim: 0x888888,
+  textMuted: 0x555555,
+  accent: 0x00d2ff,
+  gold: 0xffd700,
+
+  // Player
+  playerBody: 0xe67e22,
+  playerHat: 0xf1c40f,
+
+  // Buildings
+  hq: 0x2c3e50,
+  factory: 0x1e272e,
+  verify: 0x1a3a4a,
+  sram: 0x34495e,
+  sramActive: 0x2ecc71,
+  pe: 0x2c3e50,
+  peActive: 0x27ae60,
+  peWeight: 0xf39c12,
+  accumulator: 0x8e44ad,
+  dma: 0x5a3a1e,
+  conveyor: 0x555568,
+
+  // Building interaction
+  buildingBorder: 0x555577,
+  buildingNear: 0x00d2ff,
+  buildingSelected: 0xffd700,
+  hoverGlow: 0x00d2ff,
+  selectGlow: 0xffd700,
+  tooltipBg: 0x0a0e1a,
+  tooltipBorder: 0x00d2ff,
+
+  // FSM
+  fsm: {
+    IDLE: 0x95a5a6,
+    DMA: 0xe67e22,
+    SWAP: 0x9b59b6,
+    EXEC: 0x2ecc71,
+    DONE: 0x3498db,
+    ACK: 0x1abc9c,
+  } as Record<string, number>,
+
+  // Minimap
+  minimapBg: 0x0a0e1a,
+  minimapPlayer: 0xff4444,
+};
+
+/** World dimensions */
+export const WORLD = {
+  w: 3200,
+  h: 2800,
+  gridSize: 64,
+  playerSpeed: 280,
+  interactDist: 120,
+  playerSpawn: { x: 700, y: 600 },
+};
+
+/** Screen-fixed HUD layout */
+export const HUD = {
+  screenW: 1600,
+  screenH: 900,
+  minimap: { x: 16, y: 16, w: 220, h: 176 },
+  status: { x: 600, y: 12 },
+  timeline: { x: 200, y: 810, w: 1200, h: 44 },
+  controls: { x: 200, y: 860 },
+  inspector: { x: 1100, y: 50, w: 480, h: 700 },
+};
