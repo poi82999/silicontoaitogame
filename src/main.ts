@@ -5,8 +5,9 @@ import { HUD, COLORS } from './colors';
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game-container',
-  width: HUD.screenW,
-  height: HUD.screenH,
+  width: HUD.gameW,
+  height: HUD.gameH,
+  roundPixels: true,
   backgroundColor: `#${COLORS.bg.toString(16).padStart(6, '0')}`,
   scale: {
     mode: Phaser.Scale.FIT,

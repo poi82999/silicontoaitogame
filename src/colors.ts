@@ -1,3 +1,6 @@
+/** Pixel font family — DotGothic16 for cute pixel look with Korean support */
+export const FONT = '"DotGothic16", monospace';
+
 /** Factorio-style exploration color palette */
 export const COLORS = {
   // Environment
@@ -61,21 +64,25 @@ export const COLORS = {
 
 /** World dimensions */
 export const WORLD = {
-  w: 3200,
-  h: 2800,
+  w: 6400,
+  h: 5600,
   gridSize: 64,
-  playerSpeed: 280,
-  interactDist: 120,
-  playerSpawn: { x: 700, y: 600 },
+  playerSpeed: 560,
+  interactDist: 240,
+  playerSpawn: { x: 1070, y: 400 },
+  /** Scale factor applied to building/road coordinates */
+  S: 2,
 };
 
-/** Screen-fixed HUD layout */
+/** Screen-fixed HUD layout (native 1600×900, no zoom) */
 export const HUD = {
+  gameW: 1600,
+  gameH: 900,
   screenW: 1600,
   screenH: 900,
   minimap: { x: 16, y: 16, w: 220, h: 176 },
-  status: { x: 600, y: 12 },
-  timeline: { x: 200, y: 810, w: 1200, h: 44 },
-  controls: { x: 200, y: 860 },
-  inspector: { x: 1100, y: 50, w: 480, h: 700 },
+  status: { x: 520, y: 12 },
+  timeline: { x: 120, y: 820, w: 1360, h: 40 },
+  controls: { x: 120, y: 866 },
+  inspector: { x: 440, y: 60, w: 720, h: 760 },
 };
