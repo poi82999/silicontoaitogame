@@ -124,6 +124,16 @@ export class FactoryScene extends Phaser.Scene {
   private keyE!: Phaser.Input.Keyboard.Key;
   private keyEsc!: Phaser.Input.Keyboard.Key;
 
+  // Mobile touch controls
+  private isMobile = false;
+  private touchDirX = 0;
+  private touchDirY = 0;
+  private touchEPressed = false;
+  private joyBase!: Phaser.GameObjects.Arc;
+  private joyThumb!: Phaser.GameObjects.Arc;
+  private joyActive = false;
+  private joyPointerId = -1;
+
   // Buildings
   private buildingMap: Map<string, BuildingObj> = new Map();
   private nearbyBuilding: BuildingObj | null = null;
@@ -218,6 +228,7 @@ export class FactoryScene extends Phaser.Scene {
     this.createHUD();
     this.setupInput();
     this.initFlowSystem();
+    this.setupMobileControls();
   }
 
   // ── Ground with grid ──
@@ -717,6 +728,122 @@ export class FactoryScene extends Phaser.Scene {
     this.input.keyboard!.on('keydown-R', () => this.toggleWeightReuse());
   }
 
+  // ── Mobile Touch Controls ──
+  private setupMobileControls() {
+    this.isMobile = this.sys.game.device.input.touch;
+    if (!this.isMobile) return;
+
+    const depth = 200;
+    const S = HUD.screenH / 900; // scale factor for different screen sizes
+
+    // ── Virtual Joystick (bottom-left) ──
+    const joyX = 160 * S;
+    const joyY = (HUD.screenH - 160 * S);
+    const baseR = 80;
+    const thumbR = 36;
+
+    this.joyBase = this.add.circle(joyX, joyY, baseR, 0x333355, 0.4)
+      .setStrokeStyle(3, 0x6666aa, 0.6)
+      .setScrollFactor(0).setDepth(depth);
+    this.joyThumb = this.add.circle(joyX, joyY, thumbR, 0x6688cc, 0.7)
+      .setStrokeStyle(2, 0x88aaee, 0.8)
+      .setScrollFactor(0).setDepth(depth + 1);
+
+    // ── Action Buttons (bottom-right) ──
+    const btnSize = 56;
+    const btnGap = 16;
+    const rightBase = HUD.screenW - 100 * S;
+    const bottomBase = HUD.screenH - 130 * S;
+
+    const makeBtn = (x: number, y: number, label: string, color: number, cb: () => void) => {
+      const bg = this.add.circle(x, y, btnSize / 2, color, 0.5)
+        .setStrokeStyle(3, 0xaaaacc, 0.6)
+        .setScrollFactor(0).setDepth(depth)
+        .setInteractive();
+      const txt = this.add.text(x, y, label, {
+        fontSize: '24px', color: '#ffffff', fontFamily: FONT, fontStyle: 'bold',
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(depth + 1);
+      bg.on('pointerdown', () => {
+        bg.setFillStyle(color, 0.9);
+        cb();
+      });
+      bg.on('pointerup', () => bg.setFillStyle(color, 0.5));
+      bg.on('pointerout', () => bg.setFillStyle(color, 0.5));
+      return { bg, txt };
+    };
+
+    // E button (interact)
+    makeBtn(rightBase, bottomBase - (btnSize + btnGap), '🔍', 0x2288aa, () => {
+      this.touchEPressed = true;
+    });
+
+    // Play/Pause button
+    makeBtn(rightBase - (btnSize + btnGap), bottomBase, '⏯', 0x228844, () => {
+      this.togglePlay();
+    });
+
+    // Speed + button
+    makeBtn(rightBase, bottomBase, '⏩', 0x886622, () => {
+      this.cyclesPerSecond = Math.min(60, this.cyclesPerSecond + 5);
+    });
+
+    // Speed - button
+    makeBtn(rightBase - 2 * (btnSize + btnGap), bottomBase, '⏪', 0x886622, () => {
+      this.cyclesPerSecond = Math.max(1, this.cyclesPerSecond - 5);
+    });
+
+    // Close/Esc button (top-right of action area)
+    makeBtn(rightBase, bottomBase - 2 * (btnSize + btnGap), '✖', 0x883333, () => {
+      if (this.inspectorOpen) this.hideInspector();
+    });
+
+    // ── Joystick touch handling ──
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      // Only capture touches on left half for joystick
+      if (pointer.x < HUD.screenW / 2 && !this.joyActive) {
+        this.joyActive = true;
+        this.joyPointerId = pointer.id;
+        this.joyBase.setPosition(pointer.x, pointer.y);
+        this.joyThumb.setPosition(pointer.x, pointer.y);
+        this.joyBase.setAlpha(0.6);
+      }
+    });
+
+    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (!this.joyActive || pointer.id !== this.joyPointerId) return;
+      const dx = pointer.x - this.joyBase.x;
+      const dy = pointer.y - this.joyBase.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const maxDist = 70;
+
+      if (dist > 0) {
+        const clampDist = Math.min(dist, maxDist);
+        const nx = (dx / dist) * clampDist;
+        const ny = (dy / dist) * clampDist;
+        this.joyThumb.setPosition(this.joyBase.x + nx, this.joyBase.y + ny);
+        // Normalize to -1..1
+        this.touchDirX = nx / maxDist;
+        this.touchDirY = ny / maxDist;
+      }
+    });
+
+    const resetJoy = (pointer: Phaser.Input.Pointer) => {
+      if (pointer.id !== this.joyPointerId) return;
+      this.joyActive = false;
+      this.joyPointerId = -1;
+      this.touchDirX = 0;
+      this.touchDirY = 0;
+      this.joyThumb.setPosition(this.joyBase.x, this.joyBase.y);
+      this.joyBase.setAlpha(0.4);
+    };
+
+    this.input.on('pointerup', resetJoy);
+    this.input.on('pointerout', resetJoy);
+
+    // Enable multi-touch
+    this.input.addPointer(2);
+  }
+
   // ── HUD (all scrollFactor 0, native 1600×900) ──
   private createHUD() {
     const depth = 100;
@@ -907,6 +1034,12 @@ export class FactoryScene extends Phaser.Scene {
     if (this.cursors.up.isDown || this.keyW.isDown) dy -= 1;
     if (this.cursors.down.isDown || this.keyS.isDown) dy += 1;
 
+    // Mobile joystick input
+    if (this.isMobile && (Math.abs(this.touchDirX) > 0.15 || Math.abs(this.touchDirY) > 0.15)) {
+      dx += this.touchDirX;
+      dy += this.touchDirY;
+    }
+
     if (dx !== 0 || dy !== 0) {
       // Normalize
       const len = Math.sqrt(dx * dx + dy * dy);
@@ -985,8 +1118,10 @@ export class FactoryScene extends Phaser.Scene {
       }
     }
 
-    // E key interaction
-    if (Phaser.Input.Keyboard.JustDown(this.keyE)) {
+    // E key interaction (keyboard or touch)
+    const ePressed = Phaser.Input.Keyboard.JustDown(this.keyE) || this.touchEPressed;
+    this.touchEPressed = false;
+    if (ePressed) {
       if (this.inspectorOpen) {
         this.hideInspector();
         this.promptText.setVisible(!!(this.nearbyBuilding || this.nearbyWorker));
